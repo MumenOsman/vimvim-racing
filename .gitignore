@@ -1,0 +1,40 @@
+# Task folder (planning and assignments)
+Task/
+
+# Dependencies & Build
+node_modules/
+dist/
+build/
+.npm/
+
+# Graphify & Analysis
+graphify-out/
+.graphifyignore
+
+# Environment & Logs
+.env
+.env.local
+*.log
+npm-debug.log*
+yarn-debug.log*
+
+# System & OS Files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Raw asset packs and archives
+Free-Racing-Game-Kit-PNG/
+*.zip
+*.tar.gz
+
+# Agent instructions & rules
+AGENTS.md
+.agents/
+
+# Python cache
+__pycache__/
+*.pyc
+
+

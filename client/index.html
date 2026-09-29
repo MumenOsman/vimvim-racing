@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VimVim Racing</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="stylesheet" href="index.css">
+</head>
+
+<body>
+  <div id="app-root">
+    <!-- In-Game HUD: Timer, Laps, Race Position, Player Name, Perk Slot -->
+    <header id="hud-container">
+      <div class="hud-left">
+        <div id="hud-timer">00:00</div>
+        <div id="hud-fps">60 FPS</div>
+      </div>
+      <div class="hud-center">
+        <div class="hud-center-top">
+          <div id="hud-place">1st</div>
+          <div id="hud-lap">Lap 1/3</div>
+        </div>
+        <div id="hud-minimap-container" class="hud-minimap">
+          <svg id="minimap-svg" viewBox="0 0 1600 1000" xmlns="http://www.w3.org/2000/svg">
+            <path id="minimap-track-bg" fill="none" stroke="#334155" stroke-width="54" stroke-linecap="round" stroke-linejoin="round"/>
+            <path id="minimap-track-line" fill="none" stroke="#64748b" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+            <g id="minimap-blips"></g>
+          </svg>
+        </div>
+      </div>
+      <div class="hud-right">
+        <div id="hud-perk-slot" class="hud-perk-badge empty">Item: [ Empty ]</div>
+        <div id="hud-player-badge" class="hud-player-name">Racer 1</div>
+      </div>
+    </header>
+
+    <!-- Main Game Viewport (Pure DOM element rendering, NO CANVAS) -->
+    <main id="game-viewport">
+      <!-- Diorama SVG Track, Cars, Items and UFO Abduction Actor injected dynamically -->
+
+      <!-- Top-left Controls Instruction Bar -->
+      <aside id="controls-bar">
+        <ul class="controls-list">
+          <li class="ctrl-item"><strong>K</strong>: Gas</li>
+          <li class="ctrl-item"><strong>J</strong>: Brake / Reverse</li>
+          <li class="ctrl-item"><strong>H</strong>: Steer Left</li>
+          <li class="ctrl-item"><strong>L</strong>: Steer Right</li>
+          <li class="ctrl-item"><strong>Space</strong>: Use Item</li>
+          <li class="ctrl-item"><strong>Esc</strong>: Pause</li>
+        </ul>
+      </aside>
+
+      <!-- Live Race Scoreboard (Real-time standings of all opponents) -->
+      <aside id="hud-leaderboard" class="hud-leaderboard" aria-label="Race Standings">
+        <div class="leaderboard-title">Standings</div>
+        <ol id="leaderboard-list" class="leaderboard-list"></ol>
+      </aside>
+    </main>
+
+    <!-- Broadcast Banners (e.g. "Game paused") -->
+    <div id="broadcast-banners"></div>
+
+    <!-- Dynamic Menu & Room Lobby Background (Shared across Start Menu, Solo, Multiplayer & Rooms) -->
+    <div id="home-dynamic-bg" class="home-dynamic-bg"></div>
+
+    <!-- Home Screen Menu (First launch & Quit destination) -->
+    <section id="home-menu" class="modal-overlay">
+
+      <!-- 1. Initial Entry Screen: Mode Selection -->
+      <div id="mode-select-card" class="modal-card home-card">
+        <h1 class="home-title">VimVim Racing</h1>
+        <p class="mode-select-subtitle">Select Interface Mode</p>
+        <div class="button-group home-button-group">
+          <button id="btn-select-menu" class="btn primary btn-large">Menu</button>
+          <button id="btn-select-terminal" class="btn secondary btn-large">Terminal Mode</button>
+        </div>
+      </div>
+
+      <!-- 2. Standard GUI Start Menu -->
+      <div id="home-card" class="modal-card home-card" style="display: none;">
+        <h1 class="home-title">VimVim Racing</h1>
+        <div class="button-group home-button-group">
+          <button id="btn-home-solo" class="btn primary btn-large">Solo Race</button>
+          <button id="btn-home-multiplayer" class="btn secondary btn-large">Multiplayer Room</button>
+          <button id="btn-home-settings" class="btn secondary btn-large">Settings</button>
+          <button id="btn-home-back" class="btn text-btn">Back to Mode Selection</button>
+        </div>
+      </div>
+
+      <!-- 3. Terminal Mode Window (Clean, bloat-free terminal window in menu size) -->
+      <div id="terminal-card" class="modal-card home-card terminal-card" style="display: none;">
+        <div class="terminal-header">
+          <span class="terminal-title">VimVim Racing</span>
+          <button id="btn-terminal-close" class="terminal-close-btn" type="button" aria-label="Close terminal">x</button>
+        </div>
+
+        <div class="terminal-body" id="terminal-screen-output">
+          <div class="terminal-option-row"><span class="term-key">1</span> : solo</div>
+          <div class="terminal-option-row"><span class="term-key">2</span> : multi</div>
+          <div class="terminal-option-row"><span class="term-key">3</span> : settings</div>
+          <div class="terminal-option-row"><span class="term-key">q</span> : return to menu selection</div>
+          <div class="terminal-line" id="term-status-msg"></div>
+        </div>
+
+        <div class="terminal-bottom-panel">
+          <div class="terminal-prompt-line">
+            <span class="terminal-prompt-sym">:</span>
+            <input type="text" id="terminal-command-input" class="terminal-input" autocomplete="off" spellcheck="false" placeholder="type your command...">
+            <span class="terminal-cursor">_</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Solo Race Setup Menu -->
+    <section id="solo-menu" class="modal-overlay" style="display: none;">
+      <div class="modal-card setup-card">
+        <h2>Solo Race Setup</h2>
+        
+        <!-- Car Model Carousel -->
+        <div class="setup-group">
+          <label class="setup-label">Select Car</label>
+          <div class="carousel-control">
+            <button id="btn-solo-car-prev" class="btn-carousel" type="button">&lt;</button>
+            <div class="carousel-preview">
+              <img id="img-solo-car" class="carousel-car-img" src="/assets/cars/car_1_dc2626.png" alt="car">
+              <span id="label-solo-car" class="carousel-title">Formula Speed</span>
+            </div>
+            <button id="btn-solo-car-next" class="btn-carousel" type="button">&gt;</button>
+          </div>
+        </div>
+
+        <!-- 5-Swatch Color Picker -->
+        <div class="setup-group">
+          <label class="setup-label">Car Color</label>
+          <div id="solo-color-picker" class="color-picker-row">
+            <button class="color-swatch active" data-color="#dc2626" style="background:#dc2626;" type="button" aria-label="Red"></button>
+            <button class="color-swatch" data-color="#2563eb" style="background:#2563eb;" type="button" aria-label="Blue"></button>
+            <button class="color-swatch" data-color="#15803d" style="background:#15803d;" type="button" aria-label="Green"></button>
+            <button class="color-swatch" data-color="#eab308" style="background:#eab308;" type="button" aria-label="Yellow"></button>
+            <button class="color-swatch" data-color="#9333ea" style="background:#9333ea;" type="button" aria-label="Purple"></button>
+          </div>
+        </div>
+
+        <!-- Track Carousel -->
+        <div class="setup-group">
+          <label class="setup-label">Race Track</label>
+          <div class="carousel-control">
+            <button id="btn-solo-track-prev" class="btn-carousel" type="button">&lt;</button>
+            <div class="carousel-preview track-preview-box">
+              <img id="img-solo-track" class="carousel-track-img" src="/assets/kit/track_assembled.png" alt="track">
+              <div class="track-info">
+                <span id="label-solo-track" class="carousel-title">Grand Prix Raceway</span>
+                <span id="badge-solo-track" class="track-diff-badge easy">Easy</span>
+              </div>
+            </div>
+            <button id="btn-solo-track-next" class="btn-carousel" type="button">&gt;</button>
+          </div>
+        </div>
+
+        <!-- NPC Count Selector -->
+        <div class="setup-group">
+          <label class="setup-label" for="select-solo-npcs">Opponents (NPCs)</label>
+          <select id="select-solo-npcs" class="form-select">
+            <option value="1">1 NPC (2 Cars Total)</option>
+            <option value="2">2 NPCs (3 Cars Total)</option>
+            <option value="3" selected>3 NPCs (4 Cars Total)</option>
+          </select>
+        </div>
+
+        <!-- Lap Count Selector -->
+        <div class="setup-group">
+          <label class="setup-label" for="select-solo-laps">Number of Laps</label>
+          <select id="select-solo-laps" class="form-select">
+            <option value="1">1 Lap (Quick Sprint)</option>
+            <option value="2">2 Laps</option>
+            <option value="3" selected>3 Laps (Standard)</option>
+            <option value="5">5 Laps (Endurance)</option>
+            <option value="7">7 Laps (Grand Prix)</option>
+          </select>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="button-group horizontal-group">
+          <button id="btn-solo-back" class="btn secondary">Return</button>
+          <button id="btn-solo-start" class="btn success">Start Race</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Multiplayer Entry Menu (Create or Join) -->
+    <section id="multiplayer-menu" class="modal-overlay" style="display: none;">
+      <div class="modal-card">
+        <h2>Multiplayer Room</h2>
+        <div class="input-group">
+          <label for="input-mp-nickname">Driver Nickname</label>
+          <input type="text" id="input-mp-nickname" placeholder="Enter driver name" maxlength="15" value="Racer 1">
+        </div>
+        <div class="mp-choice-block">
+          <button id="btn-mp-create" class="btn primary btn-full">Create New Room</button>
+          <div class="mp-divider"><span>OR JOIN EXISTING</span></div>
+          <div class="input-group-row">
+            <input type="text" id="input-mp-room-code" placeholder="Room Code (e.g. AB12)" maxlength="6">
+            <button id="btn-mp-join" class="btn secondary">Join Room</button>
+          </div>
+        </div>
+        <p id="mp-entry-status" class="status-msg" role="status"></p>
+        <button id="btn-mp-back" class="btn secondary">Return to Main Menu</button>
+      </div>
+    </section>
+
+    <!-- Multiplayer In-Room Lobby (Split Options & Roster) -->
+    <section id="multiplayer-room" class="modal-overlay" style="display: none;">
+      <div class="modal-card room-lobby-card">
+        <header class="room-lobby-header">
+          <div class="room-code-group">
+            <h2>Room: <span id="mp-room-code" class="highlight-code"></span></h2>
+            <button id="btn-copy-room-code" class="btn secondary btn-small" type="button" title="Copy room code to clipboard">Copy Code</button>
+          </div>
+          <span id="mp-room-role" class="role-badge">Participant</span>
+        </header>
+
+        <div class="room-lobby-split">
+          <!-- Left Column: Customization & Room Settings -->
+          <div class="room-col-options">
+            <h3 class="col-title">Vehicle & Driver</h3>
+            
+            <!-- Driver Name Input -->
+            <div class="setup-group">
+              <label class="setup-label" for="input-mp-room-nickname">Driver Name</label>
+              <input type="text" id="input-mp-room-nickname" class="form-input" placeholder="Enter driver name" maxlength="15">
+            </div>
+
+            <!-- Car Carousel -->
+            <div class="setup-group">
+              <label class="setup-label">Car Model</label>
+              <div class="carousel-control compact">
+                <button id="btn-mp-car-prev" class="btn-carousel" type="button">&lt;</button>
+                <div class="carousel-preview compact">
+                  <img id="img-mp-car" class="carousel-car-img" src="/assets/cars/car_1_dc2626.png" alt="car">
+                  <span id="label-mp-car" class="carousel-title">Formula Speed</span>
+                </div>
+                <button id="btn-mp-car-next" class="btn-carousel" type="button">&gt;</button>
+              </div>
+            </div>
+
+            <!-- Color Swatches -->
+            <div class="setup-group">
+              <label class="setup-label">Car Color</label>
+              <div id="mp-color-picker" class="color-picker-row">
+                <button class="color-swatch active" data-color="#dc2626" style="background:#dc2626;" type="button" aria-label="Red"></button>
+                <button class="color-swatch" data-color="#2563eb" style="background:#2563eb;" type="button" aria-label="Blue"></button>
+                <button class="color-swatch" data-color="#15803d" style="background:#15803d;" type="button" aria-label="Green"></button>
+                <button class="color-swatch" data-color="#eab308" style="background:#eab308;" type="button" aria-label="Yellow"></button>
+                <button class="color-swatch" data-color="#9333ea" style="background:#9333ea;" type="button" aria-label="Purple"></button>
+              </div>
+            </div>
+
+            <!-- Track Info (Host selects, others view) -->
+            <div class="setup-group">
+              <label class="setup-label">Circuit (Host)</label>
+              <div class="carousel-control compact">
+                <button id="btn-mp-track-prev" class="btn-carousel disabled" type="button" disabled>&lt;</button>
+                <div class="carousel-preview compact">
+                  <span id="label-mp-track" class="carousel-title">Grand Prix Raceway (Easy)</span>
+                </div>
+                <button id="btn-mp-track-next" class="btn-carousel disabled" type="button" disabled>&gt;</button>
+              </div>
+            </div>
+
+            <!-- Number of NPCs (Host only) -->
+            <div class="setup-group">
+              <label class="setup-label" for="select-mp-npcs">Additional NPCs (Host)</label>
+              <select id="select-mp-npcs" class="form-select">
+                <option value="0" selected>0 NPCs</option>
+                <option value="1">1 NPC</option>
+                <option value="2">2 NPCs</option>
+              </select>
+            </div>
+
+            <!-- Number of Laps (Host only) -->
+            <div class="setup-group">
+              <label class="setup-label" for="select-mp-laps">Number of Laps (Host)</label>
+              <select id="select-mp-laps" class="form-select">
+                <option value="1">1 Lap (Quick Sprint)</option>
+                <option value="2">2 Laps</option>
+                <option value="3" selected>3 Laps (Standard)</option>
+                <option value="5">5 Laps (Endurance)</option>
+                <option value="7">7 Laps (Grand Prix)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Right Column: Player Roster & Ready / Start Controls -->
+          <div class="room-col-roster">
+            <h3 class="col-title">Drivers in Room</h3>
+            <ul id="mp-player-roster" class="roster-list"></ul>
+            
+            <div id="mp-duplicate-warning" class="warning-banner" style="display: none;">
+              Duplicate name detected! Every player must have a unique name before starting.
+            </div>
+
+            <div class="room-actions">
+              <button id="btn-mp-ready-toggle" class="btn primary">Ready</button>
+              <button id="btn-mp-start" class="btn success" style="display: none;" disabled>Start Race</button>
+              <button id="btn-mp-leave" class="btn secondary">Leave Room</button>
+            </div>
+            <p id="mp-room-status-note" class="status-note"></p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- In-Game Pause Menu Modal -->
+    <section id="in-game-menu" class="modal-overlay" style="display: none;">
+      <div class="modal-card">
+        <h2 id="pause-modal-title">Race Paused</h2>
+        <p id="pause-paused-by-msg" class="pause-banner-player" style="display: none;"></p>
+        
+        <!-- Solo Pause Options -->
+        <div id="pause-solo-options" class="button-group">
+          <button id="btn-pause-resume" class="btn primary">Resume Race</button>
+          <button id="btn-pause-restart" class="btn secondary">Restart Match</button>
+          <button id="btn-pause-settings" class="btn secondary">Settings</button>
+          <button id="btn-pause-solo-room" class="btn secondary">Return to Race Room</button>
+          <button id="btn-pause-exit-home" class="btn danger">Exit to Main Menu</button>
+        </div>
+
+        <!-- Multiplayer Pause Options -->
+        <div id="pause-mp-options" class="button-group" style="display: none;">
+          <button id="btn-pause-mp-resume" class="btn primary">Resume Race</button>
+          <button id="btn-pause-mp-restart" class="btn secondary">Restart Match (Vote)</button>
+          <button id="btn-pause-mp-settings" class="btn secondary">Settings</button>
+          <button id="btn-pause-mp-room" class="btn secondary">Return to Race Room</button>
+          <button id="btn-pause-mp-exit" class="btn danger">Quit to Main Menu</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Settings Modal (Controls & Sounds) -->
+    <section id="settings-modal" class="modal-overlay" style="display: none;">
+      <div class="modal-card">
+        <h2>Settings</h2>
+        <div class="settings-tabs">
+          <button id="btn-settings-tab-controls" class="btn settings-tab-btn active" type="button">Controls</button>
+          <button id="btn-settings-tab-sounds" class="btn settings-tab-btn" type="button">Sounds</button>
+        </div>
+
+        <!-- Controls Tab Panel -->
+        <div id="settings-panel-controls" class="settings-panel settings-controls">
+          <div class="setting-row">
+            <span>Gas</span>
+            <button class="btn secondary" data-setting-action="gas">K</button>
+          </div>
+          <div class="setting-row">
+            <span>Brake / Reverse</span>
+            <button class="btn secondary" data-setting-action="brake">J</button>
+          </div>
+          <div class="setting-row">
+            <span>Steer Left</span>
+            <button class="btn secondary" data-setting-action="left">H</button>
+          </div>
+          <div class="setting-row">
+            <span>Steer Right</span>
+            <button class="btn secondary" data-setting-action="right">L</button>
+          </div>
+          <div class="setting-row">
+            <span>Use Item</span>
+            <button class="btn secondary" data-setting-action="action">Space</button>
+          </div>
+          <div class="setting-row">
+            <span>Pause</span>
+            <button class="btn secondary" data-setting-action="pause">Escape</button>
+          </div>
+        </div>
+
+        <!-- Sounds Tab Panel -->
+        <div id="settings-panel-sounds" class="settings-panel settings-sounds" style="display: none;">
+          <div class="sound-setting-group">
+            <div class="sound-setting-header">
+              <label for="slider-music-volume">Music Volume</label>
+              <span id="label-music-val" class="sound-val-badge">70%</span>
+            </div>
+            <input type="range" id="slider-music-volume" class="form-range" min="0" max="100" value="70">
+          </div>
+          <div class="sound-setting-group">
+            <div class="sound-setting-header">
+              <label for="slider-sfx-volume">Effects Sound</label>
+              <span id="label-sfx-val" class="sound-val-badge">80%</span>
+            </div>
+            <input type="range" id="slider-sfx-volume" class="form-range" min="0" max="100" value="80">
+          </div>
+        </div>
+
+        <button id="btn-settings-close" class="btn primary">Close</button>
+      </div>
+    </section>
+
+    <!-- Multiplayer Restart Vote Dialog Modal -->
+    <section id="restart-vote-modal" class="modal-overlay" style="display: none;">
+      <div class="modal-card vote-card">
+        <h2>Restart Match Vote</h2>
+        <p id="vote-prompt-text" class="vote-prompt">A racer has requested to restart the race.</p>
+        <div class="vote-timer-bar">
+          <div id="vote-timer-fill" class="vote-timer-fill"></div>
+        </div>
+        <p id="vote-timer-label" class="vote-timer-label">Time remaining: 15s</p>
+        <div class="button-group horizontal-group">
+          <button id="btn-vote-yes" class="btn success">Vote Yes</button>
+          <button id="btn-vote-no" class="btn danger">Vote No</button>
+        </div>
+        <p id="vote-status-msg" class="vote-status-msg"></p>
+      </div>
+    </section>
+
+    <!-- Game Over Modal (Ville) -->
+    <section id="game-over-modal" class="modal-overlay" style="display: none;">
+      <div class="modal-card">
+        <h2>Race Concluded</h2>
+        <p id="game-over-winner" class="game-over-text"></p>
+        <div class="button-group">
+          <button id="btn-game-over-restart" class="btn primary">Race Again</button>
+          <button id="btn-game-over-home" class="btn secondary">Main Menu</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- In-Game Chat Overlay (Rene) -->
+    <aside id="chat-container" class="chat-collapsed">
+      <header class="chat-header">
+        <h2 id="chat-heading">Race Chat</h2>
+        <span id="chat-unread" class="chat-unread" hidden></span>
+        <button id="chat-toggle" class="chat-toggle" type="button" aria-expanded="false"
+          aria-controls="chat-content">Show</button>
+      </header>
+      <div id="chat-content" class="chat-content">
+        <div id="chat-messages" aria-live="polite"></div>
+        <input type="text" id="chat-input" placeholder="Type message and press Enter..." aria-label="Chat message">
+      </div>
+    </aside>
+  </div>
+
+  <script type="module" src="main.js"></script>
+</body>
+
+</html>
