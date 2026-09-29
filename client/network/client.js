@@ -8,11 +8,23 @@
 import { BaseModule } from '../core/base_module.js';
 import { EventType } from '../core/events.js';
 
+const RENDER_WS_URL = 'wss://vimvim-racing.onrender.com';
+
+function resolveServerUrl(customUrl) {
+  if (customUrl) return customUrl;
+  if (typeof window === 'undefined') return RENDER_WS_URL;
+  const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  if (isLocal) {
+    const defaultProto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    return `${defaultProto}//${window.location.host}`;
+  }
+  return RENDER_WS_URL;
+}
+
 export class NetworkClient extends BaseModule {
   constructor(serverUrl) {
     super('NetworkClient');
-    const defaultProto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    this.serverUrl = serverUrl || `${defaultProto}//${window.location.host}`;
+    this.serverUrl = resolveServerUrl(serverUrl);
     this.socket = null;
     this.isConnected = false;
     this.playerId = null;
