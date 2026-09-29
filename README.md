@@ -1,5 +1,7 @@
 # VimVim Racing
 
+**Play Online**: [https://mumenosman.itch.io/vimvim-racing](https://mumenosman.itch.io/vimvim-racing)
+
 A real-time, multiplayer 2D top-down racing game for 2 to 4 players, running entirely in the browser with no plugins or installations required on the player side.
 
 Built using Node.js and WebSockets on the server, and pure HTML/CSS/JavaScript on the client. Every vehicle, road, and UI element is rendered using standard DOM elements — no HTML Canvas is used anywhere in the codebase.
