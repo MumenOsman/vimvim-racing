@@ -11,7 +11,8 @@ import { EventType } from '../core/events.js';
 export class NetworkClient extends BaseModule {
   constructor(serverUrl) {
     super('NetworkClient');
-    this.serverUrl = serverUrl || `ws://${window.location.host}`;
+    const defaultProto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    this.serverUrl = serverUrl || `${defaultProto}//${window.location.host}`;
     this.socket = null;
     this.isConnected = false;
     this.playerId = null;
