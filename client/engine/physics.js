@@ -287,7 +287,7 @@ export class PhysicsEngine {
   }
 
   /**
-   * Resolve car-to-car collisions between all active vehicles with cushion bounce
+   * Resolve car-to-car collisions between all active vehicles with balanced bounce & side deflection
    * @param {Array<object>} cars
    * @returns {{ hadCollision: boolean, hasNewImpact: boolean }}
    */
@@ -315,46 +315,48 @@ export class PhysicsEngine {
           const pairKey = id1 < id2 ? `${id1}:${id2}` : `${id2}:${id1}`;
           currentContacts.add(pairKey);
 
-          if (!this.activeCarContacts.has(pairKey)) {
+          const isNew = !this.activeCarContacts.has(pairKey);
+          if (isNew) {
             hasNewImpact = true;
           }
 
-          // Normal collision vector
+          // Normal collision vector from c1 to c2
           const nx = dx / dist;
           const ny = dy / dist;
 
-          // 1. Positional overlap separation
+          // 1. Positional overlap separation with a clean 3.5px clearance cushion
+          // This immediately clears the contact zone and prevents prolonged sticking
           const overlap = minDist - dist;
-          c1.x -= nx * (overlap * 0.55);
-          c1.y -= ny * (overlap * 0.55);
-          c2.x += nx * (overlap * 0.55);
-          c2.y += ny * (overlap * 0.55);
+          const separation = (overlap + 3.5) * 0.5;
+          c1.x -= nx * separation;
+          c1.y -= ny * separation;
+          c2.x += nx * separation;
+          c2.y += ny * separation;
 
-          // 2. Velocity calculation
+          this.clampToArena(c1);
+          this.clampToArena(c2);
+
+          // 2. Gentle speed tap on new impact (no compounding speed drain)
+          if (isNew) {
+            c1.speed = Math.max(0, c1.speed * 0.93);
+            c2.speed = Math.max(0, c2.speed * 0.93);
+          }
+
+          // 3. Symmetric side deflection: deflect heading angles away from collision normal
+          // This allows cars to naturally peel away when rubbing or hitting from the side
           const rad1 = (c1.angle * Math.PI) / 180;
           const rad2 = (c2.angle * Math.PI) / 180;
-          const v1x = c1.vx !== undefined && c1.vx !== 0 ? c1.vx : Math.cos(rad1) * c1.speed;
-          const v1y = c1.vy !== undefined && c1.vy !== 0 ? c1.vy : Math.sin(rad1) * c1.speed;
-          const v2x = c2.vx !== undefined && c2.vx !== 0 ? c2.vx : Math.cos(rad2) * c2.speed;
-          const v2y = c2.vy !== undefined && c2.vy !== 0 ? c2.vy : Math.sin(rad2) * c2.speed;
 
-          const rvx = v2x - v1x;
-          const rvy = v2y - v1y;
-          const velAlongNormal = rvx * nx + rvy * ny;
+          // Cross product of heading vector and normal vector indicates impact side
+          const cross1 = Math.cos(rad1) * ny - Math.sin(rad1) * nx;
+          const cross2 = Math.cos(rad2) * (-ny) - Math.sin(rad2) * (-nx);
 
-          if (velAlongNormal < 0) {
-            const restitution = 0.65; // Soft cushion bounce
-            const impulse = -(1 + restitution) * velAlongNormal * 0.5;
-            const bounceImpulse = impulse + 35; // Distinct outward cushion push
-
-            c1.vx = v1x - bounceImpulse * nx;
-            c1.vy = v1y - bounceImpulse * ny;
-            c2.vx = v2x + bounceImpulse * nx;
-            c2.vy = v2y + bounceImpulse * ny;
-
-            // Moderate speed penalty: cars push apart and lose ~30% speed
-            c1.speed = Math.max(0, c1.speed * 0.70);
-            c2.speed = Math.max(0, c2.speed * 0.70);
+          const deflectDeg = 6.0;
+          if (Math.abs(cross1) > 0.15) {
+            c1.angle = (c1.angle - Math.sign(cross1) * deflectDeg + 360) % 360;
+          }
+          if (Math.abs(cross2) > 0.15) {
+            c2.angle = (c2.angle - Math.sign(cross2) * deflectDeg + 360) % 360;
           }
         }
       }
