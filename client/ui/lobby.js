@@ -18,7 +18,7 @@ export function getCarSpriteUrl(carModel = 1, color = '#dc2626') {
   const cleanHex = String(color || '').replace('#', '').toLowerCase();
   const validHexes = ['dc2626', '2563eb', '15803d', 'eab308', '9333ea'];
   const finalHex = validHexes.includes(cleanHex) ? cleanHex : 'dc2626';
-  return `/assets/cars/car_${modelNum}_${finalHex}.png`;
+  return `assets/cars/car_${modelNum}_${finalHex}.png`;
 }
 
 export const CAR_MODELS = [

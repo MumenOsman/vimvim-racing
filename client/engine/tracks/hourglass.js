@@ -9,7 +9,7 @@ export const HOURGLASS = {
   "name": "Hourglass Raceway",
   "difficulty": "medium",
   "theme": "kit",
-  "image": "/assets/tracks/hourglass/track_assembled.webp",
+  "image": "assets/tracks/hourglass/track_assembled.webp",
   "width": 1800,
   "height": 1600,
   "roadWidth": 136,
@@ -617,5 +617,5 @@ export const HOURGLASS = {
     }
   ],
   "svgPath": "M 778.16 179.90 C 980.37 182.93, 1026.71 208.22, 1025.00 322.16 C 1023.29 436.10, 726.03 704.51, 1062.33 709.55 C 1398.64 714.59, 1611.86 753.68, 1608.25 994.95 C 1604.63 1236.22, 1304.99 1422.49, 1207.96 1421.04 C 1110.92 1419.59, 368.87 1408.46, 368.87 1408.46 C 368.87 1408.46, 13.50 1282.97, 376.03 931.16 C 738.55 579.34, 512.57 538.17, 381.95 536.21 C 251.32 534.25, 82.89 187.11, 286.56 190.16 C 321.84 190.69, 454.39 175.04, 778.16 179.90 Z",
-  "preview": "/assets/tracks/hourglass/preview.webp"
+  "preview": "assets/tracks/hourglass/preview.webp"
 };

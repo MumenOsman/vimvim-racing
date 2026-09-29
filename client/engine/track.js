@@ -85,9 +85,9 @@ export const TRACK_CATALOG = {
     id: 'grandprix',
     name: 'Grand Prix Raceway',
     difficulty: 'Easy',
-    preview: '/assets/kit/track_assembled.png',
+    preview: 'assets/kit/track_assembled.png',
     theme: 'kit',
-    image: '/assets/kit/track_assembled.png',
+    image: 'assets/kit/track_assembled.png',
     width: 1600,
     height: 1000,
     roadWidth: 136,
@@ -109,19 +109,19 @@ export const TRACK_LIST = [
     id: 'grandprix',
     name: 'Grand Prix Raceway',
     difficulty: 'Easy',
-    preview: '/assets/kit/track_assembled.png'
+    preview: 'assets/kit/track_assembled.png'
   },
   {
     id: 'hourglass',
     name: 'Hourglass Raceway',
     difficulty: 'Medium',
-    preview: '/assets/tracks/hourglass/preview.webp'
+    preview: 'assets/tracks/hourglass/preview.webp'
   },
   {
     id: 'canyon_slalom',
     name: 'Canyon Slalom',
     difficulty: 'Hard',
-    preview: '/assets/tracks/canyon_slalom/preview.webp'
+    preview: 'assets/tracks/canyon_slalom/preview.webp'
   }
 ];
 

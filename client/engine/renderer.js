@@ -189,7 +189,7 @@ export class DOMRenderer extends BaseModule {
       this.bgContainer.innerHTML = `
         <svg id="track-svg" width="${trackW}" height="${trackH}" viewBox="0 0 ${trackW} ${trackH}" xmlns="http://www.w3.org/2000/svg">
           <!-- Assembled Modular Asset Circuit -->
-          <image href="${track.image || '/assets/kit/track_assembled.png'}" x="0" y="0" width="${trackW}" height="${trackH}"/>
+          <image href="${track.image || 'assets/kit/track_assembled.png'}" x="0" y="0" width="${trackW}" height="${trackH}"/>
 
           <!-- Starting Grid Slots -->
           ${track.startingGrid.map((slot) => `
@@ -544,7 +544,7 @@ export class DOMRenderer extends BaseModule {
       if (!el) {
         el = document.createElement('div');
         el.className = 'entity-hazard-oil';
-        el.innerHTML = `<img src="/assets/kit/Game_Props_Items/Oil.png" style="width:100%;height:100%;object-fit:contain;" alt="oil"/>`;
+        el.innerHTML = `<img src="assets/kit/Game_Props_Items/Oil.png" style="width:100%;height:100%;object-fit:contain;" alt="oil"/>`;
         this.entitiesContainer.appendChild(el);
         this.hazardElements.set(h.id, el);
       }

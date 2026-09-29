@@ -37,11 +37,11 @@ export class SoundManager extends BaseModule {
     this.brakePlaying = false;
 
     // Background music elements
-    this.menuMusic = new Audio('/audio/assets/menu-music.mp3');
+    this.menuMusic = new Audio('audio/assets/menu-music.mp3');
     this.menuMusic.loop = true;
     this.menuMusic.volume = this.musicVolume;
 
-    this.raceMusic = new Audio('/audio/assets/race-music.mp3');
+    this.raceMusic = new Audio('audio/assets/race-music.mp3');
     this.raceMusic.loop = true;
     this.raceMusic.volume = this.musicVolume;
 
@@ -288,7 +288,7 @@ export class SoundManager extends BaseModule {
     if (!this.audioCtx) return;
 
     try {
-      const response = await fetch('/audio/assets/engine-noise.mp3');
+      const response = await fetch('audio/assets/engine-noise.mp3');
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
       }
@@ -305,7 +305,7 @@ export class SoundManager extends BaseModule {
     if (!this.audioCtx) return;
 
     try {
-      const response = await fetch('/audio/assets/button-click.mp3');
+      const response = await fetch('audio/assets/button-click.mp3');
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
       }
@@ -322,7 +322,7 @@ export class SoundManager extends BaseModule {
     if (!this.audioCtx) return;
 
     try {
-      const response = await fetch('/audio/assets/countdown.mp3');
+      const response = await fetch('audio/assets/countdown.mp3');
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
       }
@@ -369,7 +369,7 @@ export class SoundManager extends BaseModule {
     if (!this.audioCtx) return;
 
     try {
-      const response = await fetch('/audio/assets/car-crash.mp3');
+      const response = await fetch('audio/assets/car-crash.mp3');
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
       }
